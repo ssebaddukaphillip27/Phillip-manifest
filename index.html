@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhilliP Music Player</title>
+  
+  <!-- PWA Manifest Link -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+
+  <style>
+    /* Reset & Base Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #020617; /* slate-950 */
+      color: #f8fafc; /* slate-100 */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Layout Containers */
+    header {
+      background-color: #0f172a; /* slate-900 */
+      border-bottom: 1px solid #1e293b; /* slate-800 */
+      padding: 1rem 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .header-content {
+      max-width: 36rem;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    main {
+      flex-grow: 1;
+      max-width: 36rem;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+
+    /* Card Styling */
+    .card {
+      background-color: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Ambient Glow Effects */
+    .glow-1 {
+      position: absolute;
+      top: -6rem;
+      left: -6rem;
+      width: 12rem;
+      height: 12rem;
+      background: rgba(79, 70, 229, 0.1);
+      border-radius: 50%;
+      filter: blur(40px);
+      pointer-events: none;
+    }
+    .glow-2 {
+      position: absolute;
+      bottom: -6rem;
+      right: -6rem;
+      width: 12rem;
+      height: 12rem;
+      background: rgba(16, 185, 129, 0.1);
+      border-radius: 50%;
+      filter: blur(40px);
+      pointer-events: none;
+    }
+
+    /* Vinyl Graphic */
+    .vinyl-box {
+      position: relative;
+      width: 11rem;
+      height: 11rem;
+      border-radius: 50%;
+      background-color: #020617;
+      border: 4px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+      margin-bottom: 1.5rem;
+    }
+    .vinyl-center {
+      width: 3.5rem;
+      height: 3.5rem;
+      border-radius: 50%;
+      background: rgba(79, 70, 229, 0.2);
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .vinyl-spindle {
+      position: absolute;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      background-color: #020617;
+      border: 2px solid #334155;
+    }
+
+    /* Track Metadata */
+    .track-meta {
+      text-align: center;
+      width: 100%;
+      padding: 0 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .track-meta h2 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 0.25rem;
+    }
+    .track-meta p {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .time-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-family: monospace;
+      margin-bottom: 0.5rem;
+    }
+    input[type="range"] {
+      width: 100%;
+      height: 0.5rem;
+      background: #1e293b;
+      border-radius: 0.5rem;
+      appearance: none;
+      outline: none;
+      cursor: pointer;
+      accent-color: #6366f1;
+    }
+
+    /* Control Buttons */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      width: 100%;
+    }
+    .ctrl-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .ctrl-btn:hover {
+      color: #ffffff;
+    }
+    .side-ctrl {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background-color: #1e293b;
+      border: none;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .side-ctrl:hover {
+      background-color: #334155;
+      transform: scale(1.05);
+    }
+    .play-btn {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 1rem;
+      background-color: #4f46e5;
+      border: none;
+      color: #ffffff;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+    }
+    .play-btn:hover {
+      background-color: #4338ca;
+      transform: scale(1.05);
+    }
+
+    /* Shuffle & Repeat Buttons (bigger + active state) */
+    #btn-shuffle,
+    #btn-repeat {
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 50%;
+      background-color: #1e293b;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.2rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    #btn-shuffle:hover,
+    #btn-repeat:hover {
+      background-color: #334155;
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+    #btn-shuffle.active,
+    #btn-repeat.active {
+      background-color: rgba(79, 70, 229, 0.25);
+      color: #818cf8;
+      box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.7),
+                  0 0 12px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Add Music Button */
+    .add-btn {
+      background-color: #4f46e5;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      border: none;
+    }
+    .add-btn:hover {
+      background-color: #4338ca;
+    }
+
+    /* Playlist Container */
+    .playlist-card {
+      background-color: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 1rem;
+      padding: 1rem;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+      max-height: 15rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .playlist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #1e293b;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+    }
+    .clear-btn {
+      background: none;
+      border: none;
+      color: #fb7185;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .clear-btn:hover {
+      color: #f43f5e;
+    }
+    .playlist-items {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding-right: 0.25rem;
+    }
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .playlist-item.active {
+      background-color: rgba(79, 70, 229, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+    }
+    .playlist-item:not(.active):hover {
+      background-color: rgba(30, 41, 59, 0.6);
+      color: #e2e8f0;
+    }
+    .playlist-empty {
+      text-align: center;
+      padding: 2rem 0;
+      color: #64748b;
+      font-size: 0.75rem;
+      font-style: italic;
+    }
+
+    /* Footer */
+    footer {
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #64748b;
+      border-top: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(79, 70, 229, 0.2); border: 1px solid rgba(99, 102, 241, 0.3); display: flex; align-items: center; justify-content: center; color: #818cf8;">
+          🎵
+        </div>
+        <div>
+          <h1 style="font-size: 1rem; font-weight: bold; letter-spacing: 0.025em;">PhilliP Player</h1>
+          <p style="font-size: 0.75rem; color: #94a3b8;">Offline Audio Engine</p>
+        </div>
+      </div>
+      <label class="add-btn">
+        <span>📁</span>
+        <span>Add Music</span>
+        <input type="file" id="audio-file-input" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac,.wma" multiple style="display: none;">
+      </label>
+    </div>
+  </header>
+
+  <!-- Main Player Container -->
+  <main>
+
+    <!-- Album Art / Visualizer Box -->
+    <div class="card">
+      <div class="glow-1"></div>
+      <div class="glow-2"></div>
+
+      <!-- Vinyl Graphic -->
+      <div class="vinyl-box">
+        <div id="album-art-icon" class="vinyl-center">
+          💿
+        </div>
+        <div class="vinyl-spindle"></div>
+      </div>
+
+      <!-- Track Metadata -->
+      <div class="track-meta">
+        <h2 id="track-title">No Track Loaded</h2>
+        <p id="track-artist">Upload local audio files to begin</p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="time-labels">
+          <span id="current-time">0:00</span>
+          <span id="total-duration">0:00</span>
+        </div>
+        <input type="range" id="progress-bar" value="0" min="0" max="100" step="0.1">
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="controls">
+        <button id="btn-shuffle" onclick="toggleShuffle()" class="ctrl-btn" title="Shuffle">🔀</button>
+
+        <button onclick="prevTrack()" class="side-ctrl" title="Previous">⏮</button>
+
+        <button id="btn-play-pause" onclick="togglePlayPause()" class="play-btn">
+          <span id="play-pause-icon">▶</span>
+        </button>
+
+        <button onclick="nextTrack()" class="side-ctrl" title="Next">⏭</button>
+
+        <button id="btn-repeat" onclick="toggleRepeat()" class="ctrl-btn" title="Repeat">🔁</button>
+      </div>
+    </div>
+
+    <!-- Playlist Drawer -->
+    <div class="playlist-card">
+      <div class="playlist-header">
+        <span>🎵 Playlist Queue (<span id="playlist-count">0</span>)</span>
+        <button onclick="clearPlaylist()" class="clear-btn">Clear All</button>
+      </div>
+
+      <div id="playlist-container" class="playlist-items">
+        <div id="playlist-empty" class="playlist-empty">
+          Your playlist is currently empty
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    © 2026 Ssebadduka Phillip. All rights reserved.
+  </footer>
+
+  <!-- Audio Element -->
+  <audio id="audio-element"></audio>
+
+  <!-- Application Logic -->
+  <script>
+    let playlist = [];
+    let currentIndex = 0;
+    let isPlaying = false;
+    let isShuffle = false;
+    let isRepeat = false;
+
+    const audioElement = document.getElementById('audio-element');
+    const fileInput = document.getElementById('audio-file-input');
+    const playPauseBtn = document.getElementById('btn-play-pause');
+    const playPauseIcon = document.getElementById('play-pause-icon');
+    const progressBar = document.getElementById('progress-bar');
+    const currentTimeEl = document.getElementById('current-time');
+    const totalDurationEl = document.getElementById('total-duration');
+    const trackTitleEl = document.getElementById('track-title');
+    const trackArtistEl = document.getElementById('track-artist');
+    const playlistContainer = document.getElementById('playlist-container');
+    const playlistCountEl = document.getElementById('playlist-count');
+
+    // --- IndexedDB Database Setup ---
+    const DB_NAME = 'PhillipMusicPlayerDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'tracks';
+    let db;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+          }
+        };
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function saveTrackToDB(file) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const trackData = {
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          artist: "Local Storage",
+          fileData: file
+        };
+        const request = store.add(trackData);
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function loadTracksFromDB() {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function deleteTrackFromDB(id) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function clearDB() {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.clear();
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    // --- On App Launch & Cordova Background Ready Setup ---
+    document.addEventListener('deviceready', function () {
+      if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
+        cordova.plugins.backgroundMode.enable();
+        cordova.plugins.backgroundMode.setDefaults({
+          title: 'PhilliP Player',
+          text: 'Playing audio in background',
+          hidden: false,
+          resume: true,
+          color: '4F46E5'
+        });
+      }
+    }, false);
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await initDB();
+        const savedTracks = await loadTracksFromDB();
+        if (savedTracks.length > 0) {
+          savedTracks.forEach(track => {
+            const trackObj = {
+              id: track.id,
+              name: track.name,
+              artist: track.artist,
+              url: URL.createObjectURL(track.fileData)
+            };
+            playlist.push(trackObj);
+          });
+          updatePlaylistUI();
+          loadTrack(0);
+        }
+      } catch (err) {
+        console.error("IndexedDB initialization error:", err);
+      }
+    });
+
+    // Handle File Uploads
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      const wasEmpty = playlist.length === 0;
+
+      for (const file of files) {
+        const id = await saveTrackToDB(file);
+        const trackObj = {
+          id: id,
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          artist: "Local Storage",
+          url: URL.createObjectURL(file)
+        };
+        playlist.push(trackObj);
+      }
+
+      updatePlaylistUI();
+
+      if (wasEmpty && playlist.length > 0) {
+        loadTrack(0);
+      }
+
+      fileInput.value = '';
+    });
+
+    function updatePlaylistUI() {
+      playlistCountEl.innerText = playlist.length;
+      if (playlist.length === 0) {
+        playlistContainer.innerHTML = '<div id="playlist-empty" class="playlist-empty">Your playlist is currently empty</div>';
+        return;
+      }
+
+      playlistContainer.innerHTML = '';
+      playlist.forEach((track, index) => {
+        const item = document.createElement('div');
+        item.className = `playlist-item ${index === currentIndex ? 'active' : ''}`;
+        
+        item.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 0.75rem; overflow: hidden; flex-grow: 1; cursor: pointer;" onclick="playSpecificTrack(${index})">
+            <span>${index === currentIndex && isPlaying ? '🔊' : '🎵'}</span>
+            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">${track.name}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-left: 0.5rem;">
+            <span style="font-size: 0.75rem; color: #64748b; font-family: monospace;">Audio</span>
+            <button onclick="removeTrack(${index}, event)" style="background:none; border:none; color: #64748b; cursor: pointer;" title="Remove track">🗑️</button>
+          </div>
+        `;
+        playlistContainer.appendChild(item);
+      });
+    }
+
+    function playSpecificTrack(index) {
+      currentIndex = index;
+      loadTrack(currentIndex);
+      playTrack();
+    }
+
+    async function removeTrack(index, event) {
+      event.stopPropagation();
+
+      const track = playlist[index];
+      if (track) {
+        if (track.url) URL.revokeObjectURL(track.url);
+        if (track.id) await deleteTrackFromDB(track.id);
+      }
+
+      playlist.splice(index, 1);
+
+      if (playlist.length === 0) {
+        clearPlaylist();
+        return;
+      }
+
+      if (index === currentIndex) {
+        pauseTrack();
+        if (currentIndex >= playlist.length) {
+          currentIndex = 0;
+        }
+        loadTrack(currentIndex);
+      } else if (index < currentIndex) {
+        currentIndex--;
+      }
+
+      updatePlaylistUI();
+    }
+
+    function loadTrack(index) {
+      if (playlist.length === 0) return;
+      currentIndex = index;
+      const track = playlist[currentIndex];
+      audioElement.src = track.url;
+      trackTitleEl.innerText = track.name;
+      trackArtistEl.innerText = track.artist;
+      updatePlaylistUI();
+      updateMediaSession(track);
+    }
+
+    function togglePlayPause() {
+      if (playlist.length === 0) {
+        alert('Please add music files first using the "Add Music" button.');
+        return;
+      }
+      if (isPlaying) {
+        pauseTrack();
+      } else {
+        playTrack();
+      }
+    }
+
+    function playTrack() {
+      if (!audioElement.src && playlist.length > 0) {
+        loadTrack(currentIndex);
+      }
+      audioElement.play().then(() => {
+        isPlaying = true;
+        playPauseIcon.innerText = "⏸";
+        updatePlaylistUI();
+
+        // Update Android Media Session state for active notification display
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.playbackState = 'playing';
+        }
+      }).catch(err => console.error("Playback error:", err));
+    }
+
+    function pauseTrack() {
+      audioElement.pause();
+      isPlaying = false;
+      playPauseIcon.innerText = "▶";
+      updatePlaylistUI();
+
+      // Update Android Media Session state
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    }
+
+    function nextTrack() {
+      if (playlist.length === 0) return;
+      if (isShuffle) {
+        currentIndex = Math.floor(Math.random() * playlist.length);
+      } else {
+        currentIndex = (currentIndex + 1) % playlist.length;
+      }
+      loadTrack(currentIndex);
+      playTrack();
+    }
+
+    function prevTrack() {
+      if (playlist.length === 0) return;
+      currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+      loadTrack(currentIndex);
+      playTrack();
+    }
+
+    function toggleShuffle() {
+      isShuffle = !isShuffle;
+      const btn = document.getElementById('btn-shuffle');
+      btn.style.color = isShuffle ? "#818cf8" : "#94a3b8";
+      btn.classList.toggle('active', isShuffle);
+    }
+
+    function toggleRepeat() {
+      isRepeat = !isRepeat;
+      const btn = document.getElementById('btn-repeat');
+      btn.style.color = isRepeat ? "#818cf8" : "#94a3b8";
+      btn.classList.toggle('active', isRepeat);
+    }
+
+    async function clearPlaylist() {
+      pauseTrack();
+      playlist.forEach(track => {
+        if (track.url) URL.revokeObjectURL(track.url);
+      });
+      await clearDB();
+      playlist = [];
+      currentIndex = 0;
+      audioElement.src = '';
+      trackTitleEl.innerText = "No Track Loaded";
+      trackArtistEl.innerText = "Upload local audio files to begin";
+      progressBar.value = 0;
+      currentTimeEl.innerText = "0:00";
+      totalDurationEl.innerText = "0:00";
+      updatePlaylistUI();
+    }
+
+    // --- MediaSession API Integration for Lock Screen Controls ---
+    function updateMediaSession(track) {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.name,
+          artist: track.artist || "PhilliP Player",
+          album: "Local Music Queue",
+          artwork: [
+            { src: 'https://via.placeholder.com/96', sizes: '96x96', type: 'image/png' },
+            { src: 'https://via.placeholder.com/512', sizes: '512x512', type: 'image/png' }
+          ]
+        });
+
+        // Map lock-screen notification buttons to player actions
+        navigator.mediaSession.setActionHandler('play', () => playTrack());
+        navigator.mediaSession.setActionHandler('pause', () => pauseTrack());
+        navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+        navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.seekTime && audioElement.duration) {
+            audioElement.currentTime = details.seekTime;
+          }
+        });
+      }
+    }
+
+    audioElement.addEventListener('timeupdate', () => {
+      if (audioElement.duration) {
+        const progress = (audioElement.currentTime / audioElement.duration) * 100;
+        progressBar.value = progress;
+        currentTimeEl.innerText = formatTime(audioElement.currentTime);
+      }
+    });
+
+    audioElement.addEventListener('loadedmetadata', () => {
+      totalDurationEl.innerText = formatTime(audioElement.duration);
+    });
+
+    audioElement.addEventListener('ended', () => {
+      if (isRepeat) {
+        audioElement.currentTime = 0;
+        playTrack();
+      } else {
+        nextTrack();
+      }
+    });
+
+    progressBar.addEventListener('input', (e) => {
+      if (audioElement.duration) {
+        const time = (e.target.value / 100) * audioElement.duration;
+        audioElement.currentTime = time;
+      }
+    });
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+  </script>
+</body>
+</html>
